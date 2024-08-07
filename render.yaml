@@ -1,0 +1,22 @@
+databases:
+  - name: moodscape
+    plan: free
+    databaseName: moodscape
+    user: moodscape
+
+services:
+  - type: web
+    plan: free
+    name: moodscape
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "python -m gunicorn moodscape.asgi:application -k uvicorn.workers.UvicornWorker"
+    envVars:
+      - key: postgresql://moodscape:KsTk7e8FUYqndQlgzhhztYxhApvRxoJw@dpg-cqpsgu8gph6c7380m55g-a/moodscape
+        fromDatabase:
+          name: moodscape
+          property: connectionString
+      - key: django-insecure-mrtrko4y2whs8t_7%-unwh5xa68s1++ipjp713n!t_a(*7801=
+        generateValue: true
+      - key: WEB_CONCURRENCY
+        value: 4
