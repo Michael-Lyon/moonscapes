@@ -27,7 +27,7 @@ SECRET_KEY = "django-insecure-mrtrko4y2whs8t_7%-unwh5xa68s1++ipjp713n!t_a(*7801=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "shadow-who-sure-increase.trycloudflare.com"]
+ALLOWED_HOSTS = ["localhost", "moodscapes.onrender.com"]
 
 
 # Application definition
@@ -85,7 +85,7 @@ CORS_ALLOW_HEADERS = [
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://shadow-who-sure-increase.trycloudflare.com"
+    "https://moodscapes.onrender.com"
 ]
 
 TEMPLATES = [
