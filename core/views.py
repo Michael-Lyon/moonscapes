@@ -68,9 +68,6 @@ class ImageUploadView(APIView):
             print(serializer.errors)
             return Response(serializer.errors, status=400)
 
-
-
-
 class ImageStatusView(APIView):
     def get(self, request, task_id, *args, **kwargs):
         print("GET REQUEST IS HERE!!!")
@@ -81,8 +78,7 @@ class ImageStatusView(APIView):
             print("NOT FOUND")
             return Response({'error': 'Task ID not found'}, status=404)
 
-        # if image.status == 'completed' or image.status == "":
-        if image.status:
+        if image.status == 'processing':
             headers = {
                 "Authorization": f"Bearer {settings.MESHY_API_KEY}"
             }
@@ -91,7 +87,7 @@ class ImageStatusView(APIView):
                 response.raise_for_status()
                 model_data = response.json()
                 image.model_data = model_data
-                image.status = "processing"
+                image.status = "completed"
                 image.save()
 
                 # Download model files and save them locally
@@ -99,11 +95,20 @@ class ImageStatusView(APIView):
                 downloaded_files = {}
 
                 for key, url in model_urls.items():
-                    file_response = requests.get(url)
-                    if file_response.status_code == 200:
-                        file_name = f"{task_id}_{key}.{url.split('.')[-1].split('?')[0]}"  # Get the file extension
-                        file_path = default_storage.save(file_name, ContentFile(file_response.content))
-                        downloaded_files[key] = request.build_absolute_uri(default_storage.url(file_path))
+                    try:
+                        file_response = requests.get(url)
+                        if file_response.status_code == 200:
+                            file_extension = url.split('.')[-1].split('?')[0]
+                            file_name = f"{task_id}_{key}.{file_extension}"
+                            if len(file_name) > 100:  # Ensure filename length is acceptable
+                                file_name = f"{task_id}_{key}.{file_extension}"
+                            file_path = default_storage.save(file_name, ContentFile(file_response.content))
+                            downloaded_files[key] = request.build_absolute_uri(default_storage.url(file_path))
+                    except Exception as e:
+                        logger.error(f"Error downloading file {key} from {url}: {e}")
+                        continue
+
+                # Update model_data with local URLs
                 model_data["model_urls"] = downloaded_files
                 image.model_data = model_data
                 image.save()
@@ -130,4 +135,4 @@ class ImageStatusView(APIView):
                 return Response({'error': 'An unexpected error occurred.'}, status=500)
         else:
             print(image.__dict__)
-        return Response({'status': image.status, 'model_urls': image.model_data["model_urls"], "task_id": image.model_data["id"]})
+            return Response({'status': image.status, 'model_urls': image.model_data.get("model_urls", {}), "task_id": image.task_id})
